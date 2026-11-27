@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Avaliação de Desempenho 360°</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; margin: 0; padding: 20px; }
+    .header { background: linear-gradient(135deg, #1e3a8a, #1d4ed8); color: white; padding: 24px 32px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(30,58,138,0.2); }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header p { margin: 4px 0 0; opacity: 0.85; font-size: 14px; }
+    .btn-group { display: flex; gap: 12px; }
+    .btn { border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: 0.2s; }
+    .btn-white { background: white; color: #1e3a8a; }
+    .btn-white:hover { background: #e2e8f0; }
+    .btn-green { background: #10b981; color: white; }
+    .btn-green:hover { background: #059669; }
+    .btn-primary { background: #1d4ed8; color: white; width: 100%; margin-top: 10px; }
+    .btn-primary:hover { background: #1e40af; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .card { background: white; padding: 22px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .card h2 { margin: 0 0 6px; font-size: 17px; color: #1e3a8a; }
+    .card .sub { margin: 0 0 16px; font-size: 13px; color: #64748b; }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; color: #334155; }
+    input, select, textarea { width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+    .questao-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; margin-top: 12px; }
+    .questao-box .badge { font-size: 11px; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+    .alerta { padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; font-weight: 500; display: none; }
+    .alerta.ok { background: #dcfce7; color: #166534; display: block; }
+    .alerta.erro { background: #fee2e2; color: #991b1b; display: block; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>Sistema de Avaliação de Desempenho 360°</h1>
+      <p>Relatórios Analíticos & Coleta Anônima — PostgreSQL + Java HttpServer + Chart.js</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-green" id="btnAlternarTela" onclick="alternarTela()">+ Novo Questionário / Cadastros</button>
+      <button class="btn btn-white" onclick="carregarRelatorios()">Atualizar Dados</button>
+    </div>
+  </div>
+
+  <!-- TELA 1: DASHBOARD DE RELATÓRIOS -->
+  <div id="telaRelatorios">
+    <div class="grid">
+      <div class="card">
+        <h2>1. Ranking Geral — Média Ponderada Final (1 a 5)</h2>
+        <p class="sub">Considera peso da questão × peso da relação (Gestor 2.0, Par/Liderado 1.5, Auto 1.0)</p>
+        <canvas id="chartRanking"></canvas>
+      </div>
+      <div class="card">
+        <h2>2. Desempenho Médio por Critério (Média Simples vs Ponderada)</h2>
+        <p class="sub">Comparativo consolidado entre as competências avaliadas na instituição</p>
+        <canvas id="chartCriterios"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h2>3. Taxa de Adesão e Pendências por Colaborador (LEFT JOIN)</h2>
+      <p class="sub">Exibe todos os colaboradores cadastrados, incluindo quem ainda não possui designações</p>
+      <canvas id="chartAdesao" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- TELA 2: NOVO QUESTIONÁRIO E CADASTROS -->
+  <div id="telaQuestionario" class="hidden">
+    <div class="grid">
+      <!-- Responder Questionário 360° -->
+      <div class="card">
+        <h2>Responder Novo Questionário 360° (Anônimo)</h2>
+        <p class="sub">Selecione o avaliador, escolha uma avaliação pendente e envie com protocolo UUID</p>
+
+        <label>1. Quem está avaliando? (Colaborador)</label>
+        <select id="selAvaliador" onchange="carregarPendencias()"></select>
+
+        <label>2. Avaliação Pendente Disponível</label>
+        <select id="selPendencia" onchange="carregarQuestoesDoCiclo()"></select>
+
+        <form id="formResponder" onsubmit="enviarRespostas(event)">
+          <div id="containerQuestoes"></div>
+          <button type="submit" class="btn btn-primary" id="btnEnviarResp" style="display:none;">Enviar Avaliação Anônima</button>
+        </form>
+        <div id="msgResponder" class="alerta"></div>
+      </div>
+
+      <!-- Cadastros Rápidos (Novo Usuário, Nova Pergunta e Nova Designação) -->
+      <div>
+        <div class="card" style="margin-bottom: 20px;">
+          <h2>Cadastrar Novo Usuário (Colaborador)</h2>
+          <form onsubmit="cadastrarColaborador(event)">
+            <label>Nome Completo</label>
+            <input type="text" name="nome" required placeholder="Ex: Lucas Andrade">
+            <label>CPF (11 dígitos, único)</label>
+            <input type="text" name="cpf" required maxlength="14" placeholder="Ex: 123.456.789-00">
+            <label>E-mail Institucional</label>
+            <input type="email" name="email" required placeholder="lucas.andrade@empresa.com">
+            <label>Senha de Acesso</label>
+            <input type="password" name="senha" required placeholder="Crie uma senha">
+            <label>Cargo (Validado pela Trigger do Banco)</label>
+            <input type="text" name="cargo" required placeholder="Ex: Professor">
+            <label>Departamento</label>
+            <input type="text" name="departamento" required placeholder="Ex: Biologia">
+            <button type="submit" class="btn btn-primary">Salvar Colaborador</button>
+          </form>
+          <div id="msgColab" class="alerta"></div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <h2>Adicionar Nova Pergunta ao Banco & Ciclo</h2>
+          <form onsubmit="cadastrarQuestao(event)">
+            <label>Critério / Competência</label>
+            <select name="id_criterio" id="selCriterio"></select>
+            <label>Enunciado da Pergunta</label>
+            <textarea name="enunciado" rows="2" required placeholder="Ex: Demonstra proatividade na resolução de bloqueios técnicos?"></textarea>
+            <label>Tipo de Resposta</label>
+            <select name="tipo_resposta">
+              <option value="ESCALA_1_5">Escala Numérica (1 a 5)</option>
+              <option value="TEXTO_LIVRE">Texto Livre (Feedback Anônimo)</option>
+            </select>
+            <label>Vincular ao Ciclo</label>
+            <select name="id_ciclo" id="selCicloQuestao"></select>
+            <label>Peso da Questão no Ciclo (ex: 1.0, 1.5, 2.0)</label>
+            <input type="number" step="0.1" name="peso" value="1.5" required>
+            <button type="submit" class="btn btn-primary">Cadastrar Pergunta</button>
+          </form>
+          <div id="msgQuestao" class="alerta"></div>
+        </div>
+
+        <div class="card">
+          <h2>Criar Nova Designação 360° (Liberar Questionário)</h2>
+          <form onsubmit="cadastrarDesignacao(event)">
+            <label>Ciclo de Avaliação</label>
+            <select name="id_ciclo" id="selCicloDes"></select>
+            <label>Avaliador (Quem vai responder)</label>
+            <select name="id_avaliador" id="selDesAvaliador"></select>
+            <label>Avaliado (Quem será avaliado)</label>
+            <select name="id_avaliado" id="selDesAvaliado"></select>
+            <label>Papel / Relação</label>
+            <select name="relacao">
+              <option value="GESTOR">GESTOR (Peso 2.0)</option>
+              <option value="PAR">PAR (Peso 1.5)</option>
+              <option value="LIDERADO">LIDERADO (Peso 1.5)</option>
+              <option value="AUTOAVALIACAO">AUTOAVALIACAO (Peso 1.0)</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Liberar Avaliação Pendente</button>
+          </form>
+          <div id="msgDes" class="alerta"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let charts = {};
+    let mostrandoQuestionario = false;
+
+    function alternarTela() {
+      mostrandoQuestionario = !mostrandoQuestionario;
+      document.getElementById('telaRelatorios').classList.toggle('hidden', mostrandoQuestionario);
+      document.getElementById('telaQuestionario').classList.toggle('hidden', !mostrandoQuestionario);
+      document.getElementById('btnAlternarTela').textContent = mostrandoQuestionario
+        ? '← Voltar aos Relatórios'
+        : '+ Novo Questionário / Cadastros';
+
+      if (mostrandoQuestionario) {
+        carregarDadosFormularios();
+      } else {
+        carregarRelatorios();
+      }
+    }
+
+    async function carregarDadosFormularios() {
+      const [colabs, crits, ciclos] = await Promise.all([
+        fetch('/api/colaboradores').then(r => r.json()),
+        fetch('/api/lista-criterios').then(r => r.json()),
+        fetch('/api/ciclos').then(r => r.json())
+      ]);
+
+      const optColabs = colabs.map(c => `<option value="${c.id_colaborador}">${c.nome} (${c.cargo})</option>`).join('');
+      document.getElementById('selAvaliador').innerHTML = optColabs;
+      document.getElementById('selDesAvaliador').innerHTML = optColabs;
+      document.getElementById('selDesAvaliado').innerHTML = optColabs;
+
+      document.getElementById('selCriterio').innerHTML =
+        crits.map(c => `<option value="${c.id_criterio}">${c.nome}</option>`).join('');
+
+      const optCiclos = ciclos.map(c => {
+        const nomeCiclo = c.titulo || c.nome || c.descricao || `Ciclo #${c.id_ciclo}`;
+        const estado = c.status || c.situacao || (c.ativo !== undefined ? (c.ativo ? 'Ativo' : 'Encerrado') : '');
+        return `<option value="${c.id_ciclo}">${nomeCiclo}${estado ? ' (' + estado + ')' : ''}</option>`;
+      }).join('');
+      
+      carregarPendencias();
+    }
+
+    async function carregarPendencias() {
+      const idAv = document.getElementById('selAvaliador').value;
+      const pendencias = await fetch(`/api/pendencias?id_avaliador=${idAv}`).then(r => r.json());
+      const sel = document.getElementById('selPendencia');
+
+      if (!pendencias.length) {
+        sel.innerHTML = '<option value="">Nenhuma avaliação pendente para este usuário</option>';
+        document.getElementById('containerQuestoes').innerHTML = '';
+        document.getElementById('btnEnviarResp').style.display = 'none';
+        return;
+      }
+
+      sel.innerHTML = pendencias.map(p =>
+        `<option value="${p.id_ciclo}|${p.id_avaliado}">${p.ciclo} — Avaliar: ${p.avaliado} (${p.relacao})</option>`
+      ).join('');
+      carregarQuestoesDoCiclo();
+    }
+
+    async function carregarQuestoesDoCiclo() {
+      const val = document.getElementById('selPendencia').value;
+      if (!val) return;
+      const [idCiclo] = val.split('|');
+      const questoes = await fetch(`/api/questoes-ciclo?id_ciclo=${idCiclo}`).then(r => r.json());
+      const div = document.getElementById('containerQuestoes');
+
+      div.innerHTML = questoes.map(q => `
+        <div class="questao-box">
+          <span class="badge">${q.criterio} • Peso ${q.peso}</span>
+          <p style="margin: 8px 0; font-weight: 600;">${q.enunciado}</p>
+          ${q.tipo_resposta === 'ESCALA_1_5'
+            ? `<select name="nota_${q.id_questao}" required>
+                 <option value="5">5 - Excelente</option>
+                 <option value="4" selected>4 - Muito Bom</option>
+                 <option value="3">3 - Satisfatório</option>
+                 <option value="2">2 - Abaixo do Esperado</option>
+                 <option value="1">1 - Insatisfatório</option>
+               </select>`
+            : `<textarea name="texto_${q.id_questao}" rows="2" required placeholder="Escreva seu feedback construtivo anônimo..."></textarea>`
+          }
+        </div>
+      `).join('');
+      document.getElementById('btnEnviarResp').style.display = questoes.length ? 'block' : 'none';
+    }
+
+    async function postForm(url, params, msgId, onSuccess) {
+      const box = document.getElementById(msgId);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams(params)
+      });
+      const json = await res.json();
+      if (res.ok) {
+        box.className = 'alerta ok';
+        box.textContent = json.mensagem;
+        if (onSuccess) onSuccess();
+      } else {
+        box.className = 'alerta erro';
+        box.textContent = 'Erro: ' + json.erro;
+      }
+    }
+
+    function enviarRespostas(e) {
+      e.preventDefault();
+      const [idCiclo, idAvaliado] = document.getElementById('selPendencia').value.split('|');
+      const data = new FormData(e.target);
+      data.append('id_ciclo', idCiclo);
+      data.append('id_avaliador', document.getElementById('selAvaliador').value);
+      data.append('id_avaliado', idAvaliado);
+      postForm('/api/responder', data, 'msgResponder', () => carregarPendencias());
+    }
+
+    function cadastrarColaborador(e) {
+      e.preventDefault();
+      postForm('/api/novo-colaborador', new FormData(e.target), 'msgColab', () => {
+        e.target.reset();
+        carregarDadosFormularios();
+      });
+    }
+
+    function cadastrarQuestao(e) {
+      e.preventDefault();
+      postForm('/api/nova-questao', new FormData(e.target), 'msgQuestao', () => e.target.reset());
+    }
+
+    function cadastrarDesignacao(e) {
+      e.preventDefault();
+      postForm('/api/nova-designacao', new FormData(e.target), 'msgDes', () => carregarPendencias());
+    }
+
+    async function carregarRelatorios() {
+      const [ranking, criterios, adesao] = await Promise.all([
+        fetch('/api/ranking').then(r => r.json()),
+        fetch('/api/criterios').then(r => r.json()),
+        fetch('/api/adesao').then(r => r.json())
+      ]);
+
+      Object.values(charts).forEach(c => c.destroy());
+
+      charts.ranking = new Chart(document.getElementById('chartRanking'), {
+        type: 'bar',
+        data: {
+          labels: ranking.map(r => `${r.avaliado} (${r.ciclo})`),
+          datasets: [{ label: 'Média Ponderada Final', data: ranking.map(r => r.media_ponderada_final), backgroundColor: '#1d4ed8', borderRadius: 6 }]
+        },
+        options: { indexAxis: 'y', scales: { x: { min: 0, max: 5 } } }
+      });
+
+      charts.criterios = new Chart(document.getElementById('chartCriterios'), {
+        type: 'radar',
+        data: {
+          labels: criterios.map(c => c.criterio),
+          datasets: [
+            { label: 'Média Simples', data: criterios.map(c => c.media_simples), borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.2)' },
+            { label: 'Média Ponderada', data: criterios.map(c => c.media_ponderada), borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.25)' }
+          ]
+        },
+        options: { scales: { r: { min: 0, max: 5 } } }
+      });
+
+      charts.adesao = new Chart(document.getElementById('chartAdesao'), {
+        type: 'bar',
+        data: {
+          labels: adesao.map(a => a.colaborador),
+          datasets: [
+            { label: 'Concluídas', data: adesao.map(a => a.concluidas), backgroundColor: '#16a34a' },
+            { label: 'Pendentes', data: adesao.map(a => a.pendentes), backgroundColor: '#ea580c' }
+          ]
+        }
+      });
+    }
+
+    carregarRelatorios();
+  </script>
+</body>
+</html>

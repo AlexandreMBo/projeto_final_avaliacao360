@@ -2,6 +2,8 @@ import java.sql.*;
 import java.util.Scanner;
 import java.util.UUID;
 
+import dao.Conexao;
+
 // concentra as operacoes do sistema no banco de dados
 public class AvaliacaoService {
 
