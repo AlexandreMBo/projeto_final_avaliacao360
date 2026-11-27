@@ -2,22 +2,46 @@
 -- teste da carga para verificar a funcionalidade das tabelas
 -- ============================================================================
 
--- COLABORADORES (IDs gerados: 1 a 7)
+-- COLABORADORES (IDs gerados: 1 a 20 — 1 Diretor, 2 Coordenadores, 10 Tutores, 3 Professores, 2 Supervisores, 2 TI)
 INSERT INTO Colaborador (cpf, nome, email, senha, cargo, departamento) VALUES
-    ('11111111111', 'Marcos Oliveira', 'marcos.dir@uni.edu.br',  '1234', 'Diretor de Unidade',   'Diretoria Acadêmica'),
-    ('22222222222', 'Ana Silva',       'ana.coord@uni.edu.br',   '1234', 'Coordenador de Curso', 'Ciência de Dados'),
-    ('33333333333', 'Carlos Mendes',   'carlos.prof@uni.edu.br', '1234', 'Professor',            'Ciência de Dados'),
-    ('44444444444', 'Beatriz Santos',  'bia.sup@uni.edu.br',     '123', 'Supervisor',           'Tutoria EAD'),
-    ('55555555555', 'Lucas Pereira',   'lucas.tutor@uni.edu.br', '1234', 'Tutor',                'Tutoria EAD'),
-    ('66666666666', 'Fernanda Lima',   'fer.supti@uni.edu.br',   '1234', 'Supervisor de TI',     'Infraestrutura e TI'),
-    ('77777777777', 'Rafael Costa',    'rafa.ti@uni.edu.br',     '1234', 'Técnico de TI',        'Infraestrutura e TI');
+    -- IDs 1 a 7 (originais mantidos para preservar designações e respostas)
+    ('11111111111', 'Marcos Oliveira',   'marcos.dir@uni.edu.br',    '1234', 'Diretor de Unidade',   'Diretoria Acadêmica'),
+    ('22222222222', 'Ana Silva',         'ana.coord@uni.edu.br',     '1234', 'Coordenador de Curso', 'Ciência de Dados'),
+    ('33333333333', 'Carlos Mendes',     'carlos.prof@uni.edu.br',   '1234', 'Professor',            'Ciência de Dados'),
+    ('44444444444', 'Beatriz Santos',    'bia.sup@uni.edu.br',       '123',  'Supervisor',           'Tutoria EAD'),
+    ('55555555555', 'Lucas Pereira',     'lucas.tutor@uni.edu.br',   '1234', 'Tutor',                'Tutoria EAD'),
+    ('66666666666', 'Fernanda Lima',     'fer.supti@uni.edu.br',     '1234', 'Supervisor de TI',     'Infraestrutura e TI'),
+    ('77777777777', 'Rafael Costa',      'rafa.ti@uni.edu.br',       '1234', 'Técnico de TI',        'Infraestrutura e TI'),
 
--- 2. CRITÉRIOS DE AVALIAÇÃO
+    -- ID 8 (+1 Coordenador de Curso -> total 2)
+    ('88888888888', 'Juliana Rocha',     'juliana.coord@uni.edu.br', '1234', 'Coordenador de Curso', 'Engenharia de Software'),
+
+    -- IDs 9 a 17 (+9 Tutores -> total 10)
+    ('99999999999', 'Camila Ferreira',   'camila.tutor@uni.edu.br',  '1234', 'Tutor',                'Tutoria EAD'),
+    ('10101010101', 'Bruno Souza',       'bruno.tutor@uni.edu.br',   '1234', 'Tutor',                'Tutoria EAD'),
+    ('12121212121', 'Mariana Gomes',     'mariana.tutor@uni.edu.br', '1234', 'Tutor',                'Tutoria EAD'),
+    ('13131313131', 'Thiago Martins',    'thiago.tutor@uni.edu.br',  '1234', 'Tutor',                'Tutoria EAD'),
+    ('14141414141', 'Larissa Barbosa',   'larissa.tutor@uni.edu.br', '1234', 'Tutor',                'Tutoria EAD'),
+    ('15151515151', 'Gabriel Ribeiro',   'gabriel.tutor@uni.edu.br', '1234', 'Tutor',                'Tutoria EAD'),
+    ('16161616161', 'Amanda Carvalho',   'amanda.tutor@uni.edu.br',  '1234', 'Tutor',                'Tutoria EAD'),
+    ('17171717171', 'Felipe Nascimento', 'felipe.tutor@uni.edu.br',  '1234', 'Tutor',                'Tutoria EAD'),
+    ('18181818181', 'Patrícia Moreira',  'patricia.tutor@uni.edu.br','1234', 'Tutor',                'Tutoria EAD'),
+
+    -- IDs 18 e 19 (+2 Professores -> total 3) e ID 20 (+1 Supervisor -> total 2)
+    ('19191919191', 'Rodrigo Teixeira',  'rodrigo.prof@uni.edu.br',  '1234', 'Professor',            'Engenharia de Software'),
+    ('20202020202', 'Ricardo Almeida',   'ricardo.prof@uni.edu.br',  '1234', 'Professor',            'Ciência de Dados'),
+    ('21212121212', 'Vanessa Cardoso',   'vanessa.sup@uni.edu.br',   '1234', 'Supervisor',           'Tutoria EAD');
+
+-- CRITÉRIOS DE AVALIAÇÃO 
 INSERT INTO Criterio (nome, descricao) VALUES
-    ('Bem-estar e Ambiente de Trabalho', 'Avalia nível de contentamento, estresse, clima organizacional e ergonomia'),
+    ('Comunicação e Transparência',               'Clareza nas orientações, escuta ativa e transparência nos processos'),
+    ('Comprometimento e Entregas',                'Cumprimento de prazos, organização e responsabilidade pelos resultados'),
+    ('Cooperação e Trabalho em Equipe',           'Colaboração, compartilhamento de conhecimento e apoio entre colegas'),
+    ('Didática e Apoio Acadêmico',                'Clareza didática e metodologias de ensino (exclusivo para Docentes/Tutores)'),
+    ('Bem-estar e Ambiente de Trabalho',          'Avalia nível de contentamento, estresse, clima organizacional e ergonomia'),
     ('Desenvolvimento e Realização Profissional', 'Avalia satisfação na carreira, capacitação contínua e cursos de aprimoramento');
 
--- 3. QUESTÕES (IDs: 1 a 30 -> 27 ESCALA e 3 TEXTO_LIVRE)
+-- QUESTÕES (IDs: 1 a 30 -> 27 ESCALA e 3 TEXTO_LIVRE)
 INSERT INTO Questao (enunciado, tipo, id_criterio) VALUES
     -- Questões originais mantidas (IDs 1 a 5)
     ('Comunica orientações, demandas e feedbacks de forma clara?',                                               'ESCALA',      1),
@@ -65,7 +89,7 @@ INSERT INTO Questao (enunciado, tipo, id_criterio) VALUES
     ('Como a nossa universidade poderia contribuir para o seu desenvolvimento pessoal e profissional?',            'TEXTO_LIVRE', 6),
     ('Apresente ideias que promovam um ambiente de trabalho mais acolhedor e confortável:',                       'TEXTO_LIVRE', 5);
 
--- 4. CICLOS DE AVALIAÇÃO (IDs: 1 a 5 — atende ao mínimo de 5 avaliações do edital)
+-- CICLOS DE AVALIAÇÃO (IDs: 1 a 5 — atende ao mínimo de 5 avaliações do edital)
 INSERT INTO Ciclo_Avaliacao (titulo, data_inicio, data_fim) VALUES
     ('Avaliação Institucional 360° - 2026/2',       DATE '2026-11-01', DATE '2026-11-30'),
     ('Avaliação Docente e Tutoria - 2026/2',        DATE '2026-11-01', DATE '2026-11-30'),
@@ -73,7 +97,7 @@ INSERT INTO Ciclo_Avaliacao (titulo, data_inicio, data_fim) VALUES
     ('Avaliação de Desenvolvimento e Carreira',     DATE '2026-09-01', DATE '2026-09-30'),
     ('Avaliação de Cooperação Intersetorial',       DATE '2026-08-01', DATE '2026-08-31');
 
--- 5. QUESTÕES POR CICLO COM PESOS DIFERENCIADOS (Ciclo_Questao)
+-- QUESTÕES POR CICLO COM PESOS DIFERENCIADOS (Ciclo_Questao)
 -- Pesos: 2.0 (critério central do ciclo), 1.5 (critério secundário), 1.0 (padrão e questões abertas)
 INSERT INTO Ciclo_Questao (id_ciclo, id_questao, peso, ordem) VALUES
     -- CICLO 1: Avaliação Institucional 360° (foco em entregas e comunicação)
@@ -121,7 +145,7 @@ INSERT INTO Ciclo_Questao (id_ciclo, id_questao, peso, ordem) VALUES
     (5, 15, 1.5, 6),  -- Acolhimento de novos membros
     (5, 30, 1.0, 7);  -- Aberta: ideias para ambiente acolhedor
 
--- 6. DESIGNAÇÕES 360° (Quem avalia quem — núcleos separados!)
+-- DESIGNAÇÕES 360° (Quem avalia quem — núcleos separados!)
 -- Exemplo 1: Avaliação completa 360° do Professor Carlos (id = 3)
 -- Exemplo 2: Avaliação no núcleo de Tutoria (Beatriz e Lucas)
 -- Exemplo 3: Avaliação isolada no núcleo de TI (Fernanda e Rafael — sem contato com Tutores)
@@ -144,7 +168,7 @@ INSERT INTO Designacao_360 (id_ciclo, id_avaliador, id_avaliado, relacao, status
     (2, 4, 5, 'GESTOR', 'CONCLUIDA');
 
 
--- 7. RESPOSTAS ANÔNIMAS DAS AVALIAÇÕES CONCLUÍDAS
+-- RESPOSTAS ANÔNIMAS DAS AVALIAÇÕES CONCLUÍDAS
 INSERT INTO Resposta (id_submissao, id_ciclo, id_avaliado, id_questao, relacao, nota_escala, texto_resposta) VALUES
     -- CICLO 1: Submissão 1 para Prof. Carlos (Autoavaliação)
     ('sub-c1-001', 1, 3, 1, 'AUTOAVALIACAO', 4, NULL),
@@ -185,3 +209,95 @@ INSERT INTO Resposta (id_submissao, id_ciclo, id_avaliado, id_questao, relacao, 
     ('sub-c2-002', 2, 5, 4, 'GESTOR', 5, NULL),
     ('sub-c2-002', 2, 5, 1, 'GESTOR', 5, NULL),
     ('sub-c2-002', 2, 5, 5, 'GESTOR', NULL, 'Explica as dúvidas dos alunos de forma objetiva.');
+
+
+    -- ---------------------------------
+    -- complemento de respostas para outros ciclos e avaliados 
+    -------------------------------------
+
+
+-- ============================================================================
+-- 8. COMPLEMENTO DE DESIGNAÇÕES 360° (CICLOS 3, 4 E 5 — NOVOS COLABORADORES)
+-- ============================================================================
+INSERT INTO Designacao_360 (id_ciclo, id_avaliador, id_avaliado, relacao, status) VALUES
+    -- CICLO 3 (Pesquisa de Clima e Bem-estar — questões 18, 19, 20, 21, 22, 23, 30)
+    (3, 8,  8,  'AUTOAVALIACAO', 'CONCLUIDA'), -- Juliana (Coord. Eng. Software)
+    (3, 18, 8,  'LIDERADO',      'CONCLUIDA'), -- Rodrigo (Prof.) avalia Juliana
+    (3, 1,  8,  'GESTOR',        'CONCLUIDA'), -- Marcos (Diretor) avalia Juliana
+    (3, 9,  9,  'AUTOAVALIACAO', 'CONCLUIDA'), -- Camila (Tutora)
+    (3, 20, 9,  'GESTOR',        'CONCLUIDA'), -- Vanessa (Supervisora) avalia Camila
+    (3, 10, 11, 'PAR',           'CONCLUIDA'), -- Bruno (Tutor) avalia Mariana (Tutora)
+    (3, 12, 13, 'PAR',           'PENDENTE'),  -- Thiago avalia Larissa (pendente para relatórios)
+
+    -- CICLO 4 (Desenvolvimento e Carreira — questões 24, 25, 26, 27, 28, 29)
+    (4, 18, 18, 'AUTOAVALIACAO', 'CONCLUIDA'), -- Prof. Rodrigo
+    (4, 8,  18, 'GESTOR',        'CONCLUIDA'), -- Juliana (Coord.) avalia Rodrigo
+    (4, 19, 19, 'AUTOAVALIACAO', 'CONCLUIDA'), -- Prof. Ricardo
+    (4, 2,  19, 'GESTOR',        'CONCLUIDA'), -- Ana (Coord.) avalia Ricardo
+    (4, 20, 14, 'GESTOR',        'CONCLUIDA'), -- Vanessa (Sup.) avalia Gabriel (Tutor)
+    (4, 4,  15, 'GESTOR',        'PENDENTE'),  -- Beatriz avalia Amanda (pendente)
+
+    -- CICLO 5 (Cooperação Intersetorial — questões 3, 8, 12, 13, 14, 15, 30)
+    (5, 2,  8,  'PAR',           'CONCLUIDA'), -- Ana avalia Juliana (entre coordenações)
+    (5, 8,  2,  'PAR',           'CONCLUIDA'), -- Juliana avalia Ana
+    (5, 16, 17, 'PAR',           'CONCLUIDA'), -- Felipe avalia Patrícia (Tutores)
+    (5, 6,  20, 'PAR',           'CONCLUIDA'), -- Fernanda (Sup. TI) avalia Vanessa (Sup. Tutoria)
+    (5, 17, 16, 'PAR',           'PENDENTE');  -- Patrícia avalia Felipe (pendente)
+
+-- ============================================================================
+-- 9. COMPLEMENTO DE RESPOSTAS ANÔNIMAS (CICLOS 3, 4 E 5)
+-- ============================================================================
+INSERT INTO Resposta (id_submissao, id_ciclo, id_avaliado, id_questao, relacao, nota_escala, texto_resposta) VALUES
+    -- CICLO 3: Clima e Bem-estar — Coord. Juliana (ID 8)
+    ('sub-c3-001', 3, 8,  18, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c3-001', 3, 8,  19, 'AUTOAVALIACAO', 3, NULL),
+    ('sub-c3-001', 3, 8,  20, 'AUTOAVALIACAO', 3, NULL),
+    ('sub-c3-001', 3, 8,  30, 'AUTOAVALIACAO', NULL, 'Criar salas silenciosas para atendimento síncrono.'),
+
+    ('sub-c3-002', 3, 8,  18, 'LIDERADO',      5, NULL),
+    ('sub-c3-002', 3, 8,  21, 'LIDERADO',      5, NULL),
+    ('sub-c3-002', 3, 8,  22, 'LIDERADO',      5, NULL),
+    ('sub-c3-002', 3, 8,  30, 'LIDERADO',      NULL, 'Coordenação acessível e aberta ao diálogo.'),
+
+    ('sub-c3-003', 3, 8,  18, 'GESTOR',        5, NULL),
+    ('sub-c3-003', 3, 8,  23, 'GESTOR',        4, NULL),
+
+    -- CICLO 3: Clima e Bem-estar — Tutora Camila (ID 9) e Tutora Mariana (ID 11)
+    ('sub-c3-004', 3, 9,  18, 'AUTOAVALIACAO', 5, NULL),
+    ('sub-c3-004', 3, 9,  19, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c3-005', 3, 9,  21, 'GESTOR',        5, NULL),
+    ('sub-c3-005', 3, 9,  22, 'GESTOR',        5, NULL),
+    ('sub-c3-006', 3, 11, 18, 'PAR',           4, NULL),
+    ('sub-c3-006', 3, 11, 20, 'PAR',           4, NULL),
+
+    -- CICLO 4: Desenvolvimento e Carreira — Prof. Rodrigo (ID 18) e Prof. Ricardo (ID 19)
+    ('sub-c4-001', 4, 18, 24, 'AUTOAVALIACAO', 5, NULL),
+    ('sub-c4-001', 4, 18, 26, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c4-001', 4, 18, 29, 'AUTOAVALIACAO', NULL, 'Bolsa parcial para congressos internacionais de Engenharia de Software.'),
+
+    ('sub-c4-002', 4, 18, 24, 'GESTOR',        5, NULL),
+    ('sub-c4-002', 4, 18, 27, 'GESTOR',        5, NULL),
+    ('sub-c4-002', 4, 18, 28, 'GESTOR',        4, NULL),
+
+    ('sub-c4-003', 4, 19, 24, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c4-003', 4, 19, 25, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c4-004', 4, 19, 27, 'GESTOR',        5, NULL),
+    ('sub-c4-004', 4, 19, 29, 'GESTOR',        NULL, 'Ampliar acesso a clusters GPU para pesquisa aplicada.'),
+
+    ('sub-c4-005', 4, 14, 24, 'GESTOR',        4, NULL),
+    ('sub-c4-005', 4, 14, 26, 'GESTOR',        5, NULL),
+
+    -- CICLO 5: Cooperação Intersetorial — Coordenações e Supervisões
+    ('sub-c5-001', 5, 8,  3,  'PAR',           5, NULL),
+    ('sub-c5-001', 5, 8,  12, 'PAR',           5, NULL),
+    ('sub-c5-001', 5, 8,  14, 'PAR',           5, NULL),
+
+    ('sub-c5-002', 5, 2,  3,  'PAR',           5, NULL),
+    ('sub-c5-002', 5, 2,  13, 'PAR',           4, NULL),
+    ('sub-c5-002', 5, 2,  30, 'PAR',           NULL, 'Reuniões mensais de alinhamento curricular entre cursos.'),
+
+    ('sub-c5-003', 5, 17, 12, 'PAR',           4, NULL),
+    ('sub-c5-003', 5, 17, 15, 'PAR',           5, NULL),
+
+    ('sub-c5-004', 5, 20, 13, 'PAR',           5, NULL),
+    ('sub-c5-004', 5, 20, 14, 'PAR',           5, NULL);

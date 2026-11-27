@@ -7,13 +7,11 @@ DROP TABLE IF EXISTS Questao CASCADE;
 DROP TABLE IF EXISTS Criterio CASCADE;
 DROP TABLE IF EXISTS Colaborador CASCADE;
 
--- tabelas das entidades
-
+-- =============================================================================
+-- TABELAS DAS ENTIDADES INDEPENDENTES
+-- =============================================================================
 
 -- COLABORADOR
--- Tabela independente
--- armazena os dados de cada funcionário o id será utilizado como chave primária, cpf e email serão unique, já que não pode haver funcionários com mesmo email e cpf.
--- restrição de cargo para os cargos pré-definidos no sistema na constraint para garantir que não haja erro de preenchimento ou cargo inválido.
 CREATE TABLE Colaborador (
     id_colaborador SERIAL PRIMARY KEY,
     cpf CHAR(11) UNIQUE NOT NULL,
@@ -34,16 +32,20 @@ CREATE TABLE Colaborador (
 );
 
 -- CRITERIO
--- Tabela independente
--- Guarda as competências avaliadas (ex: Comunicação, Liderança) para não repetir texto na tabela Questao (3FN).
 CREATE TABLE Criterio (
     id_criterio SERIAL PRIMARY KEY,
-    nome VARCHAR(60) UNIQUE NOT NULL
+    nome VARCHAR(60) UNIQUE NOT NULL CHECK (nome IN (
+        'Comunicação e Transparência',
+        'Comprometimento e Entregas',
+        'Cooperação e Trabalho em Equipe',
+        'Didática e Apoio Acadêmico',
+        'Bem-estar e Ambiente de Trabalho',
+        'Desenvolvimento e Realização Profissional'
+    )),
+    descricao VARCHAR(200)
 );
 
 -- CICLO_AVALIACAO
--- Tabela independente
--- Representa cada edição da avaliação (ex: Ciclo 360° - 2026/2). A data_fim não pode ser menor que a data_inicio.
 CREATE TABLE Ciclo_Avaliacao (
     id_ciclo SERIAL PRIMARY KEY,
     titulo VARCHAR(100) NOT NULL,
@@ -52,13 +54,11 @@ CREATE TABLE Ciclo_Avaliacao (
     CONSTRAINT chk_datas_ciclo CHECK (data_fim >= data_inicio)
 );
 
-
--- tabelas dependentes (possuem chaves estrangeiras - FK)
-
+-- =============================================================================
+-- TABELAS DEPENDENTES (POSSUEM CHAVES ESTRANGEIRAS - FK)
+-- =============================================================================
 
 -- QUESTAO
--- Depende de Criterio (relacionamento 1:N)
--- Guarda as perguntas reutilizáveis. O id_criterio é FK apontando para Criterio.
 CREATE TABLE Questao (
     id_questao SERIAL PRIMARY KEY,
     enunciado TEXT NOT NULL,
@@ -68,9 +68,7 @@ CREATE TABLE Questao (
     CONSTRAINT chk_tipo_questao CHECK (tipo IN ('ESCALA', 'TEXTO_LIVRE'))
 );
 
--- CICLO_QUESTAO
--- Tabela associativa (relacionamento M:N entre Ciclo_Avaliacao e Questao)
--- A PK composta (id_ciclo, id_questao) impede repetir a mesma pergunta no ciclo. Guarda o peso de cada questão.
+-- CICLO_QUESTAO (Relacionamento M:N com peso da questão no ciclo)
 CREATE TABLE Ciclo_Questao (
     id_ciclo INT,
     id_questao INT,
@@ -83,8 +81,6 @@ CREATE TABLE Ciclo_Questao (
 );
 
 -- DESIGNACAO_360
--- Controla quem avalia quem em cada ciclo.
--- A PK composta (id_ciclo, id_avaliador, id_avaliado) garante que cada pessoa avalie cada colega uma única vez por ciclo.
 CREATE TABLE Designacao_360 (
     id_ciclo INT,
     id_avaliador INT,
@@ -107,11 +103,7 @@ CREATE TABLE Designacao_360 (
     CONSTRAINT chk_status CHECK (status IN ('PENDENTE', 'CONCLUIDA'))
 );
 
--- RESPOSTA (Versão anônima)
--- A PK simples (id_resposta) identifica cada registro, e a restrição UNIQUE (id_submissao, id_questao)
--- garante uma única resposta por questão dentro de cada formulário enviado, sem identificar o avaliador.
--- Possui duas FKs: uma composta que liga à Ciclo_Questao e outra simples que liga ao avaliado em Colaborador.
--- Guarda também a relacao e o peso_relacao automático para manter o cálculo da média ponderada em sigilo.
+-- RESPOSTA (Versão anônima com UUID de submissão)
 CREATE TABLE Resposta (
     id_resposta    SERIAL PRIMARY KEY,
     id_submissao   VARCHAR(36) NOT NULL,
@@ -138,38 +130,37 @@ CREATE TABLE Resposta (
     CONSTRAINT uq_submissao_questao UNIQUE (id_submissao, id_questao)
 );
 
---------------------------------------------------------------------------------
--- Regra de negócio (TRIGGER): Restringe questões sobre didática a docentes/tutores
---------------------------------------------------------------------------------
+-- =============================================================================
+-- REGRA DE NEGÓCIO (TRIGGER): Restringe questões de Didática a Docentes/Tutores
+-- =============================================================================
 
--- função de validação
 CREATE OR REPLACE FUNCTION fn_validar_questao_por_cargo()
 RETURNS TRIGGER AS $$
 DECLARE
     v_cargo_avaliado VARCHAR(60);
     v_nome_criterio  VARCHAR(60);
 BEGIN
-    -- Busca o cargo de quem está sendo avaliado
     SELECT cargo INTO v_cargo_avaliado
     FROM Colaborador
     WHERE id_colaborador = NEW.id_avaliado;
 
-    -- Busca o critério (tema) da pergunta que está sendo respondida
     SELECT c.nome INTO v_nome_criterio
     FROM Questao q
     JOIN Criterio c ON q.id_criterio = c.id_criterio
     WHERE q.id_questao = NEW.id_questao;
 
-    -- Se o critério for 'Didática' e o avaliado NÃO for Professor nem Tutor, bloqueia!
-    IF v_nome_criterio = 'Didática' AND v_cargo_avaliado NOT IN ('Professor', 'Tutor') THEN
-        RAISE EXCEPTION 'Operação bloqueada: O critério Didática só pode ser avaliado para Professor ou Tutor (Cargo atual: %).', v_cargo_avaliado;
+    -- Corrigido para bater exatamente com o nome na CHECK constraint de Criterio
+    IF v_nome_criterio = 'Didática e Apoio Acadêmico'
+       AND v_cargo_avaliado NOT IN ('Professor', 'Tutor') THEN
+        RAISE EXCEPTION 'Operação bloqueada: O critério Didática e Apoio Acadêmico só pode ser avaliado para Professor ou Tutor (Cargo atual: %).', v_cargo_avaliado;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Amarra a função para rodar automaticamente ANTES de inserir ou atualizar uma Resposta
+DROP TRIGGER IF EXISTS trg_validar_questao_por_cargo ON Resposta;
+
 CREATE TRIGGER trg_validar_questao_por_cargo
 BEFORE INSERT OR UPDATE ON Resposta
 FOR EACH ROW
