@@ -61,51 +61,51 @@ INSERT INTO Designacao_360 (id_ciclo, id_avaliador, id_avaliado, relacao, status
 
     -- Núcleo de TI (isolado das avaliações pedagógicas):
     (1, 6, 7, 'GESTOR',        'CONCLUIDA'), -- Fernanda (Sup. TI) avalia Rafael (Técnico TI)
-    (1, 7, 6, 'LIDERADO',      'PENDENTE');  -- Rafael (Técnico TI) avalia Fernanda (Sup. TI)
+    (1, 7, 6, 'LIDERADO',      'PENDENTE'),  -- Rafael (Técnico TI) avalia Fernanda (Sup. TI)
 
     -- Ciclo 2 (Acadêmico - questão didática aplicada somente a docentes e tutores):
     (2, 2, 3, 'GESTOR', 'CONCLUIDA'),
     (2, 4, 5, 'GESTOR', 'CONCLUIDA');
 
 
--- 7. RESPOSTAS DAS AVALIAÇÕES CONCLUÍDAS
-INSERT INTO Resposta (id_ciclo, id_avaliador, id_avaliado, id_questao, nota_escala, texto_resposta) VALUES
-    -- CICLO 1: Autoavaliação do Prof. Carlos (3 -> 3)
-    (1, 3, 3, 1, 4, NULL),
-    (1, 3, 3, 2, 5, NULL),
-    (1, 3, 3, 3, 4, NULL),
-    (1, 3, 3, 5, NULL, 'Busco atualizar constantemente os materiais práticos das aulas.'), -- alterado id_questao: 4 -> 5
+-- 7. RESPOSTAS ANÔNIMAS DAS AVALIAÇÕES CONCLUÍDAS
+INSERT INTO Resposta (id_submissao, id_ciclo, id_avaliado, id_questao, relacao, nota_escala, texto_resposta) VALUES
+    -- CICLO 1: Submissão 1 para Prof. Carlos (Autoavaliação)
+    ('sub-c1-001', 1, 3, 1, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c1-001', 1, 3, 2, 'AUTOAVALIACAO', 5, NULL),
+    ('sub-c1-001', 1, 3, 3, 'AUTOAVALIACAO', 4, NULL),
+    ('sub-c1-001', 1, 3, 5, 'AUTOAVALIACAO', NULL, 'Busco atualizar constantemente os materiais práticos das aulas.'),
 
-    -- CICLO 1: Coordenadora Ana avaliando Prof. Carlos (2 -> 3)
-    (1, 2, 3, 1, 5, NULL),
-    (1, 2, 3, 2, 5, NULL),
-    (1, 2, 3, 3, 5, NULL),
-    (1, 2, 3, 5, NULL, 'Excelente engajamento com a coordenação e alunos.'), -- alterado id_questao: 4 -> 5
+    -- CICLO 1: Submissão 2 para Prof. Carlos (Gestor)
+    ('sub-c1-002', 1, 3, 1, 'GESTOR', 5, NULL),
+    ('sub-c1-002', 1, 3, 2, 'GESTOR', 5, NULL),
+    ('sub-c1-002', 1, 3, 3, 'GESTOR', 5, NULL),
+    ('sub-c1-002', 1, 3, 5, 'GESTOR', NULL, 'Excelente engajamento com a coordenação e alunos.'),
 
-    -- CICLO 1: Tutor Lucas avaliando Prof. Carlos (5 -> 3)
-    (1, 5, 3, 1, 4, NULL),
-    (1, 5, 3, 2, 4, NULL),
-    (1, 5, 3, 3, 5, NULL),
-    (1, 5, 3, 5, NULL, 'Sempre alinha os roteiros de aula com antecedência.'), -- alterado id_questao: 4 -> 5
+    -- CICLO 1: Submissão 3 para Prof. Carlos (Liderado)
+    ('sub-c1-003', 1, 3, 1, 'LIDERADO', 4, NULL),
+    ('sub-c1-003', 1, 3, 2, 'LIDERADO', 4, NULL),
+    ('sub-c1-003', 1, 3, 3, 'LIDERADO', 5, NULL),
+    ('sub-c1-003', 1, 3, 5, 'LIDERADO', NULL, 'Sempre alinha os roteiros de aula com antecedência.'),
 
-    -- CICLO 1: Supervisora Beatriz avaliando Tutor Lucas (4 -> 5)
-    (1, 4, 5, 1, 5, NULL),
-    (1, 4, 5, 2, 4, NULL),
-    (1, 4, 5, 3, 5, NULL),
-    (1, 4, 5, 5, NULL, 'Atendimento muito ágil aos alunos no fórum.'), -- alterado id_questao: 4 -> 5
+    -- CICLO 1: Submissão 4 para Tutor Lucas (Gestor)
+    ('sub-c1-004', 1, 5, 1, 'GESTOR', 5, NULL),
+    ('sub-c1-004', 1, 5, 2, 'GESTOR', 4, NULL),
+    ('sub-c1-004', 1, 5, 3, 'GESTOR', 5, NULL),
+    ('sub-c1-004', 1, 5, 5, 'GESTOR', NULL, 'Atendimento muito ágil aos alunos no fórum.'),
 
-    -- CICLO 1: Supervisora de TI Fernanda avaliando Técnico Rafael (6 -> 7)
-    (1, 6, 7, 1, 4, NULL),
-    (1, 6, 7, 2, 5, NULL),
-    (1, 6, 7, 3, 5, NULL),
-    (1, 6, 7, 5, NULL, 'Resolveu rapidamente a manutenção dos laboratórios.'), -- alterado id_questao: 4 -> 5
+    -- CICLO 1: Submissão 5 para Técnico Rafael (Gestor)
+    ('sub-c1-005', 1, 7, 1, 'GESTOR', 4, NULL),
+    ('sub-c1-005', 1, 7, 2, 'GESTOR', 5, NULL),
+    ('sub-c1-005', 1, 7, 3, 'GESTOR', 5, NULL),
+    ('sub-c1-005', 1, 7, 5, 'GESTOR', NULL, 'Resolveu rapidamente a manutenção dos laboratórios.'),
 
-    -- CICLO 2 (Acadêmico/Didática): Coordenadora Ana avaliando Prof. Carlos (2 -> 3)
-    (2, 2, 3, 4, 5, NULL),
-    (2, 2, 3, 1, 5, NULL),
-    (2, 2, 3, 5, NULL, 'Didática clara e exemplos práticos em laboratório.'),
+    -- CICLO 2 (Acadêmico/Didática): Submissão 1 para Prof. Carlos (Gestor)
+    ('sub-c2-001', 2, 3, 4, 'GESTOR', 5, NULL),
+    ('sub-c2-001', 2, 3, 1, 'GESTOR', 5, NULL),
+    ('sub-c2-001', 2, 3, 5, 'GESTOR', NULL, 'Didática clara e exemplos práticos em laboratório.'),
 
-    -- CICLO 2 (Acadêmico/Didática): Supervisora Beatriz avaliando Tutor Lucas (4 -> 5)
-    (2, 4, 5, 4, 5, NULL),
-    (2, 4, 5, 1, 5, NULL),
-    (2, 4, 5, 5, NULL, 'Explica as dúvidas dos alunos de forma objetiva.');
+    -- CICLO 2 (Acadêmico/Didática): Submissão 2 para Tutor Lucas (Gestor)
+    ('sub-c2-002', 2, 5, 4, 'GESTOR', 5, NULL),
+    ('sub-c2-002', 2, 5, 1, 'GESTOR', 5, NULL),
+    ('sub-c2-002', 2, 5, 5, 'GESTOR', NULL, 'Explica as dúvidas dos alunos de forma objetiva.');
