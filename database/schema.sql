@@ -80,6 +80,14 @@ CREATE TABLE Designacao_360 (
     id_avaliador INT,
     id_avaliado INT,
     relacao VARCHAR(20) NOT NULL,
+    peso_relacao NUMERIC(4,2) GENERATED ALWAYS AS (
+        CASE relacao
+            WHEN 'GESTOR'        THEN 2.0
+            WHEN 'PAR'           THEN 1.5
+            WHEN 'LIDERADO'      THEN 1.5
+            WHEN 'AUTOAVALIACAO' THEN 1.0
+        END
+    ) STORED,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDENTE',
     PRIMARY KEY (id_ciclo, id_avaliador, id_avaliado),
     CONSTRAINT fk_desig_ciclo FOREIGN KEY (id_ciclo) REFERENCES Ciclo_Avaliacao(id_ciclo) ON DELETE CASCADE,
