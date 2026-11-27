@@ -21,7 +21,7 @@ CREATE TABLE Colaborador (
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(50) NOT NULL,
     cargo VARCHAR(60) NOT NULL,
-    departamento VARCHAR(60) NOT NULL
+    departamento VARCHAR(60) NOT NULL,
     CONSTRAINT chk_cargo CHECK (cargo IN (
         'Diretor de Unidade',
         'Coordenador de Curso',
@@ -125,3 +125,40 @@ CREATE TABLE Resposta (
         REFERENCES Ciclo_Questao(id_ciclo, id_questao) ON DELETE RESTRICT,
     CONSTRAINT chk_nota_escala CHECK (nota_escala BETWEEN 1 AND 5)
 );
+
+--------------------------------------------------------------------------------
+-- Regra de negócio (TRIGGER): Restringe questões sobre didática a docentes/tutores
+--------------------------------------------------------------------------------
+
+-- função de validação
+CREATE OR REPLACE FUNCTION fn_validar_questao_por_cargo()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_cargo_avaliado VARCHAR(60);
+    v_nome_criterio  VARCHAR(60);
+BEGIN
+    -- Busca o cargo de quem está sendo avaliado
+    SELECT cargo INTO v_cargo_avaliado
+    FROM Colaborador
+    WHERE id_colaborador = NEW.id_avaliado;
+
+    -- Busca o critério (tema) da pergunta que está sendo respondida
+    SELECT c.nome INTO v_nome_criterio
+    FROM Questao q
+    JOIN Criterio c ON q.id_criterio = c.id_criterio
+    WHERE q.id_questao = NEW.id_questao;
+
+    -- Se o critério for 'Didática' e o avaliado NÃO for Professor nem Tutor, bloqueia!
+    IF v_nome_criterio = 'Didática' AND v_cargo_avaliado NOT IN ('Professor', 'Tutor') THEN
+        RAISE EXCEPTION 'Operação bloqueada: O critério Didática só pode ser avaliado para Professor ou Tutor (Cargo atual: %).', v_cargo_avaliado;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Amarra a função para rodar automaticamente ANTES de inserir ou atualizar uma Resposta
+CREATE TRIGGER trg_validar_questao_por_cargo
+BEFORE INSERT OR UPDATE ON Resposta
+FOR EACH ROW
+EXECUTE FUNCTION fn_validar_questao_por_cargo();
