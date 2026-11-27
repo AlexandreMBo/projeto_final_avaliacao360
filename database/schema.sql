@@ -107,23 +107,35 @@ CREATE TABLE Designacao_360 (
     CONSTRAINT chk_status CHECK (status IN ('PENDENTE', 'CONCLUIDA'))
 );
 
--- RESPOSTA (Versão identificada / não anônima)
--- A PK composta (id_ciclo, id_avaliador, id_avaliado, id_questao) garante uma única
--- resposta por questão dentro de cada avaliação designada.
--- Possui duas FKs compostas: uma liga à Designacao_360 e a outra à Ciclo_Questao.
+-- RESPOSTA (Versão anônima)
+-- A PK simples (id_resposta) identifica cada registro, e a restrição UNIQUE (id_submissao, id_questao)
+-- garante uma única resposta por questão dentro de cada formulário enviado, sem identificar o avaliador.
+-- Possui duas FKs: uma composta que liga à Ciclo_Questao e outra simples que liga ao avaliado em Colaborador.
+-- Guarda também a relacao e o peso_relacao automático para manter o cálculo da média ponderada em sigilo.
 CREATE TABLE Resposta (
-    id_ciclo INT,
-    id_avaliador INT,
-    id_avaliado INT,
-    id_questao INT,
-    nota_escala INT,
+    id_resposta    SERIAL PRIMARY KEY,
+    id_submissao   VARCHAR(36) NOT NULL,
+    id_ciclo       INT NOT NULL,
+    id_avaliado    INT NOT NULL,
+    id_questao     INT NOT NULL,
+    relacao        VARCHAR(20) NOT NULL,
+    peso_relacao   NUMERIC(4,2) GENERATED ALWAYS AS (
+        CASE relacao
+            WHEN 'GESTOR'        THEN 2.0
+            WHEN 'PAR'           THEN 1.5
+            WHEN 'LIDERADO'      THEN 1.5
+            WHEN 'AUTOAVALIACAO' THEN 1.0
+        END
+    ) STORED,
+    nota_escala    INT,
     texto_resposta TEXT,
-    PRIMARY KEY (id_ciclo, id_avaliador, id_avaliado, id_questao),
-    CONSTRAINT fk_resp_designacao FOREIGN KEY (id_ciclo, id_avaliador, id_avaliado)
-        REFERENCES Designacao_360(id_ciclo, id_avaliador, id_avaliado) ON DELETE CASCADE,
     CONSTRAINT fk_resp_ciclo_questao FOREIGN KEY (id_ciclo, id_questao)
         REFERENCES Ciclo_Questao(id_ciclo, id_questao) ON DELETE RESTRICT,
-    CONSTRAINT chk_nota_escala CHECK (nota_escala BETWEEN 1 AND 5)
+    CONSTRAINT fk_resp_avaliado FOREIGN KEY (id_avaliado)
+        REFERENCES Colaborador(id_colaborador) ON DELETE RESTRICT,
+    CONSTRAINT chk_resp_relacao CHECK (relacao IN ('AUTOAVALIACAO', 'PAR', 'GESTOR', 'LIDERADO')),
+    CONSTRAINT chk_nota_escala CHECK (nota_escala BETWEEN 1 AND 5),
+    CONSTRAINT uq_submissao_questao UNIQUE (id_submissao, id_questao)
 );
 
 --------------------------------------------------------------------------------
