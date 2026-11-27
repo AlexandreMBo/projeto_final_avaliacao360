@@ -12,21 +12,58 @@ INSERT INTO Colaborador (cpf, nome, email, senha, cargo, departamento) VALUES
     ('66666666666', 'Fernanda Lima',   'fer.supti@uni.edu.br',   '1234', 'Supervisor de TI',     'Infraestrutura e TI'),
     ('77777777777', 'Rafael Costa',    'rafa.ti@uni.edu.br',     '1234', 'Técnico de TI',        'Infraestrutura e TI');
 
--- 2. CRITÉRIOS DE AVALIAÇÃO (IDs: 1 a 3)
-INSERT INTO Criterio (nome) VALUES
-    ('Comunicação e clareza'),
-    ('Liderança'),
-    ('Comprometimento e Prazos'),
-    ('Trabalho em Equipe e Apoio'),
-    ('Didática');
+-- 2. CRITÉRIOS DE AVALIAÇÃO
+INSERT INTO Criterio (nome, descricao) VALUES
+    ('Bem-estar e Ambiente de Trabalho', 'Avalia nível de contentamento, estresse, clima organizacional e ergonomia'),
+    ('Desenvolvimento e Realização Profissional', 'Avalia satisfação na carreira, capacitação contínua e cursos de aprimoramento');
 
--- 3. QUESTÕES (IDs: 1 a 4)
+-- 3. QUESTÕES (IDs: 1 a 30 -> 27 ESCALA e 3 TEXTO_LIVRE)
 INSERT INTO Questao (enunciado, tipo, id_criterio) VALUES
-    ('Comunica orientações, demandas e feedbacks de forma clara?',       'ESCALA',      1),
-    ('Cumpre os prazos acadêmicos ou técnicos com qualidade?',            'ESCALA',      2),
-    ('Colabora com os colegas do setor na resolução de problemas?',       'ESCALA',      3),
-    ('Apresenta os conteúdos e tira dúvidas com clareza didática?',       'ESCALA',      4),
-    ('Destaque um ponto forte ou sugestão de melhoria para este colega:', 'TEXTO_LIVRE', 1);
+    -- Questões originais mantidas (IDs 1 a 5)
+    ('Comunica orientações, demandas e feedbacks de forma clara?',                                               'ESCALA',      1),
+    ('Cumpre os prazos acadêmicos ou técnicos com qualidade?',                                                    'ESCALA',      2),
+    ('Colabora com os colegas do setor na resolução de problemas?',                                               'ESCALA',      3),
+    ('Apresenta os conteúdos e tira dúvidas com clareza didática?',                                               'ESCALA',      4),
+    ('Destaque um ponto forte ou sugestão de melhoria para este colega:',                                         'TEXTO_LIVRE', 1),
+
+    -- Comunicação e Transparência (Critério 1 - IDs 6 a 8)
+    ('Escuta ativamente as opiniões e sugestões da equipe antes de tomar decisões?',                              'ESCALA',      1),
+    ('Mantém os colegas informados sobre mudanças importantes nos processos ou cronogramas?',                     'ESCALA',      1),
+    ('Age com transparência e respeito ao tratar divergências ou conflitos no setor?',                           'ESCALA',      1),
+
+    -- Comprometimento e Entregas (Critério 2 - IDs 9 a 11)
+    ('Demonstra organização e planejamento na execução das suas atividades diárias?',                            'ESCALA',      2),
+    ('Assume responsabilidade pelos resultados de suas entregas, buscando soluções diante de imprevistos?',      'ESCALA',      2),
+    ('Utiliza os recursos e ferramentas da universidade de forma eficiente e ética?',                             'ESCALA',      2),
+
+    -- Cooperação e Trabalho em Equipe (Critério 3 - IDs 12 a 15)
+    ('Compartilha conhecimentos, materiais e boas práticas espontaneamente com os colegas?',                     'ESCALA',      3),
+    ('Demonstra disponibilidade para auxiliar membros da equipe em períodos de alta demanda?',                    'ESCALA',      3),
+    ('Contribui para um clima de cooperação mútua e confiança entre diferentes setores?',                         'ESCALA',      3),
+    ('Integra e acolhe bem novos colaboradores, estagiários ou docentes na rotina da equipe?',                   'ESCALA',      3),
+
+    -- Didática e Apoio Acadêmico (Critério 4 - IDs 16 a 17 - exclusivas para Docentes/Tutores na trigger)
+    ('Atualiza constantemente as metodologias e materiais didáticos utilizados nas aulas ou tutorias?',           'ESCALA',      4),
+    ('Estimula o pensamento crítico e a participação ativa dos estudantes durante as atividades?',               'ESCALA',      4),
+
+    -- Bem-estar, Contentamento, Estresse e Ambiente de Trabalho (Critério 5 - IDs 18 a 23)
+    ('Qual é o seu nível atual de contentamento e satisfação geral com o seu trabalho na universidade?',          'ESCALA',      5),
+    ('Como você avalia o seu nível de equilíbrio emocional e controle do estresse na rotina atual?',              'ESCALA',      5),
+    ('O volume de demandas e prazos atuais permite manter uma carga de trabalho saudável?',                       'ESCALA',      5),
+    ('Você sente que o ambiente físico e digital do seu setor é confortável, seguro e acolhedor?',                'ESCALA',      5),
+    ('Sente-se respeitado(a) e valorizado(a) como pessoa pelas lideranças e colegas no dia a dia?',                'ESCALA',      5),
+    ('Consegue conciliar satisfatoriamente sua vida pessoal e familiar com as responsabilidades profissionais?',   'ESCALA',      5),
+
+    -- Realização Profissional e Cursos de Aprimoramento (Critério 6 - IDs 24 a 28)
+    ('Sente-se profissionalmente realizado(a) com as atividades e desafios que desempenha atualmente?',           'ESCALA',      6),
+    ('Enxerga oportunidades claras de crescimento e evolução na carreira dentro da instituição?',                 'ESCALA',      6),
+    ('Com que frequência você realiza cursos de aprimoramento, capacitações ou leituras técnicas na sua área?',   'ESCALA',      6),
+    ('Como você avalia o nível de profundidade e aplicabilidade dos cursos de aprimoramento que vem realizando?', 'ESCALA',      6),
+    ('O quanto a instituição incentiva e apoia a sua participação em eventos, pós-graduações ou capacitações?',   'ESCALA',      6),
+
+    -- Questões Abertas solicitadas (IDs 29 e 30 -> totalizando 3 TEXTO_LIVRE junto com o ID 5)
+    ('Como a nossa universidade poderia contribuir para o seu desenvolvimento pessoal e profissional?',            'TEXTO_LIVRE', 6),
+    ('Apresente ideias que promovam um ambiente de trabalho mais acolhedor e confortável:',                       'TEXTO_LIVRE', 5);
 
 -- 4. CICLO DE AVALIAÇÃO (ID: 1)
 INSERT INTO Ciclo_Avaliacao (titulo, data_inicio, data_fim) VALUES
