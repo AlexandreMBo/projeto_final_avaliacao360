@@ -74,12 +74,12 @@ public class ServidorWeb {
             ORDER BY media_ponderada DESC
         """));
 
-        // 3. Adesão e Pendências (LEFT JOIN)
+// 3. Adesão e Pendências (LEFT JOIN)
         server.createContext("/api/adesao", exchange -> responderJsonSql(exchange, """
             SELECT col.id_colaborador,
                    col.nome AS colaborador,
                    col.departamento,
-                   COUNT(d.id_designacao) AS total_designadas,
+                   COUNT(d.id_ciclo) AS total_designadas,
                    COUNT(CASE WHEN d.status = 'CONCLUIDA' THEN 1 END) AS concluidas,
                    COUNT(CASE WHEN d.status = 'PENDENTE' THEN 1 END) AS pendentes
             FROM Colaborador col
@@ -87,7 +87,7 @@ public class ServidorWeb {
             GROUP BY col.id_colaborador, col.nome, col.departamento
             ORDER BY concluidas DESC, pendentes DESC, col.nome
         """));
-
+        
         // 4. Dados auxiliares para os formulários (Colaboradores, Critérios, Ciclos, Pendências e Questões)
         server.createContext("/api/colaboradores", exchange -> responderJsonSql(exchange,
             "SELECT id_colaborador, nome, email, cargo, departamento FROM Colaborador ORDER BY nome"));
@@ -116,17 +116,17 @@ public class ServidorWeb {
             Map<String, String> params = parseQuery(exchange.getRequestURI().getRawQuery());
             int idCiclo = Integer.parseInt(params.getOrDefault("id_ciclo", "0"));
             String sql = """
-                SELECT q.id_questao, c.nome AS criterio, q.enunciado, q.tipo_resposta, cq.peso
+                SELECT q.*, c.nome AS criterio, cq.peso
                 FROM Ciclo_Questao cq
                 JOIN Questao q  ON cq.id_questao = q.id_questao
                 JOIN Criterio c ON q.id_criterio = c.id_criterio
                 WHERE cq.id_ciclo = %d
-                ORDER BY q.id_questao
+                ORDER BY cq.ordem, q.id_questao
             """.formatted(idCiclo);
             responderJsonSql(exchange, sql);
         });
 
-// 5. POST: Cadastrar novo Colaborador
+        // 5. POST: Cadastrar novo Colaborador
         server.createContext("/api/novo-colaborador", exchange -> {
             if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 enviarResposta(exchange, 405, "application/json", "{\"erro\":\"Método não permitido\"}");
@@ -162,12 +162,40 @@ public class ServidorWeb {
             try (Connection conn = Conexao.conectar()) {
                 conn.setAutoCommit(false);
                 try {
+                    String colTipo = "tipo";
+                    try (Statement stMeta = conn.createStatement();
+                         ResultSet rsMeta = stMeta.executeQuery("SELECT * FROM Questao LIMIT 0")) {
+                        ResultSetMetaData md = rsMeta.getMetaData();
+                        for (int i = 1; i <= md.getColumnCount(); i++) {
+                            String col = md.getColumnName(i).toLowerCase();
+                            if (col.startsWith("tipo")) {
+                                colTipo = md.getColumnName(i);
+                                break;
+                            }
+                        }
+                    }
+
+                    String tipoForm = form.getOrDefault("tipo_resposta", "ESCALA_1_5");
+                    boolean querEscala = tipoForm.toUpperCase().contains("ESCALA");
+                    String valorTipoBanco = tipoForm;
+                    try (Statement stVal = conn.createStatement();
+                         ResultSet rsVal = stVal.executeQuery("SELECT DISTINCT " + colTipo + " FROM Questao WHERE " + colTipo + " IS NOT NULL")) {
+                        while (rsVal.next()) {
+                            String existente = rsVal.getString(1);
+                            boolean ehEscala = existente.toUpperCase().contains("ESCALA") || existente.toUpperCase().contains("NOTA");
+                            if (querEscala == ehEscala) {
+                                valorTipoBanco = existente;
+                                break;
+                            }
+                        }
+                    }
+
                     int idQuestao;
-                    String sqlQ = "INSERT INTO Questao (id_criterio, enunciado, tipo_resposta) VALUES (?, ?, ?) RETURNING id_questao";
+                    String sqlQ = "INSERT INTO Questao (id_criterio, enunciado, " + colTipo + ") VALUES (?, ?, ?) RETURNING id_questao";
                     try (PreparedStatement psQ = conn.prepareStatement(sqlQ)) {
                         psQ.setInt(1, Integer.parseInt(form.get("id_criterio")));
                         psQ.setString(2, form.get("enunciado"));
-                        psQ.setString(3, form.get("tipo_resposta"));
+                        psQ.setString(3, valorTipoBanco);
                         ResultSet rs = psQ.executeQuery();
                         rs.next();
                         idQuestao = rs.getInt(1);
@@ -175,11 +203,23 @@ public class ServidorWeb {
 
                     String idCicloStr = form.get("id_ciclo");
                     if (idCicloStr != null && !idCicloStr.isBlank()) {
-                        String sqlVinculo = "INSERT INTO Ciclo_Questao (id_ciclo, id_questao, peso) VALUES (?, ?, ?)";
+                        int idCiclo = Integer.parseInt(idCicloStr);
+                        int proximaOrdem = 1;
+                        try (PreparedStatement psOrdem = conn.prepareStatement(
+                                "SELECT COALESCE(MAX(ordem), 0) + 1 FROM Ciclo_Questao WHERE id_ciclo = ?")) {
+                            psOrdem.setInt(1, idCiclo);
+                            ResultSet rsOrdem = psOrdem.executeQuery();
+                            if (rsOrdem.next()) {
+                                proximaOrdem = rsOrdem.getInt(1);
+                            }
+                        }
+
+                        String sqlVinculo = "INSERT INTO Ciclo_Questao (id_ciclo, id_questao, peso, ordem) VALUES (?, ?, ?, ?)";
                         try (PreparedStatement psV = conn.prepareStatement(sqlVinculo)) {
-                            psV.setInt(1, Integer.parseInt(idCicloStr));
+                            psV.setInt(1, idCiclo);
                             psV.setInt(2, idQuestao);
                             psV.setDouble(3, Double.parseDouble(form.getOrDefault("peso", "1.0").replace(",", ".")));
+                            psV.setInt(4, proximaOrdem);
                             psV.executeUpdate();
                         }
                     }

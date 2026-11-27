@@ -29,6 +29,11 @@
     .alerta.ok { background: #dcfce7; color: #166534; display: block; }
     .alerta.erro { background: #fee2e2; color: #991b1b; display: block; }
     .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; color: #1e3a8a; font-weight: 600; }
+    tr:hover td { background: #f1f5f9; }
+    .pill-auto { display: inline-block; font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 6px; margin-left: 6px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -51,17 +56,20 @@
         <h2>1. Ranking Geral — Média Ponderada Final (1 a 5)</h2>
         <p class="sub">Considera peso da questão × peso da relação (Gestor 2.0, Par/Liderado 1.5, Auto 1.0)</p>
         <canvas id="chartRanking"></canvas>
+        <div id="tabelaRanking"></div>
       </div>
       <div class="card">
         <h2>2. Desempenho Médio por Critério (Média Simples vs Ponderada)</h2>
         <p class="sub">Comparativo consolidado entre as competências avaliadas na instituição</p>
         <canvas id="chartCriterios"></canvas>
+        <div id="tabelaCriterios"></div>
       </div>
     </div>
     <div class="card">
       <h2>3. Taxa de Adesão e Pendências por Colaborador (LEFT JOIN)</h2>
       <p class="sub">Exibe todos os colaboradores cadastrados, incluindo quem ainda não possui designações</p>
       <canvas id="chartAdesao" height="90"></canvas>
+      <div id="tabelaAdesao"></div>
     </div>
   </div>
 
@@ -135,11 +143,11 @@
             <label>Ciclo de Avaliação</label>
             <select name="id_ciclo" id="selCicloDes"></select>
             <label>Avaliador (Quem vai responder)</label>
-            <select name="id_avaliador" id="selDesAvaliador"></select>
+            <select name="id_avaliador" id="selDesAvaliador" onchange="atualizarRelacaoAutomatica()"></select>
             <label>Avaliado (Quem será avaliado)</label>
-            <select name="id_avaliado" id="selDesAvaliado"></select>
-            <label>Papel / Relação</label>
-            <select name="relacao">
+            <select name="id_avaliado" id="selDesAvaliado" onchange="atualizarRelacaoAutomatica()"></select>
+            <label>Papel / Relação <span class="pill-auto" id="badgeRelacaoAuto">Automático</span></label>
+            <select name="relacao" id="selDesRelacao">
               <option value="GESTOR">GESTOR (Peso 2.0)</option>
               <option value="PAR">PAR (Peso 1.5)</option>
               <option value="LIDERADO">LIDERADO (Peso 1.5)</option>
@@ -156,6 +164,7 @@
   <script>
     let charts = {};
     let mostrandoQuestionario = false;
+    let listaColaboradores = [];
 
     function alternarTela() {
       mostrandoQuestionario = !mostrandoQuestionario;
@@ -172,6 +181,43 @@
       }
     }
 
+    function ehCargoLideranca(cargo) {
+      const c = (cargo || '').toLowerCase();
+      return c.includes('diretor') || c.includes('coordenador') || c.includes('gestor') || c.includes('gerente') || c.includes('chefe');
+    }
+
+    function atualizarRelacaoAutomatica() {
+      const idAv = Number(document.getElementById('selDesAvaliador').value);
+      const idAlvo = Number(document.getElementById('selDesAvaliado').value);
+      const selRel = document.getElementById('selDesRelacao');
+      const badge = document.getElementById('badgeRelacaoAuto');
+      if (!idAv || !idAlvo) return;
+
+      if (idAv === idAlvo) {
+        selRel.value = 'AUTOAVALIACAO';
+        badge.textContent = 'Autoavaliação detectada';
+        return;
+      }
+
+      const av = listaColaboradores.find(c => Number(c.id_colaborador) === idAv);
+      const alvo = listaColaboradores.find(c => Number(c.id_colaborador) === idAlvo);
+      if (!av || !alvo) return;
+
+      const avLider = ehCargoLideranca(av.cargo);
+      const alvoLider = ehCargoLideranca(alvo.cargo);
+
+      if (avLider && !alvoLider) {
+        selRel.value = 'GESTOR';
+        badge.textContent = `Liderança (${av.cargo}) → Equipe`;
+      } else if (!avLider && alvoLider) {
+        selRel.value = 'LIDERADO';
+        badge.textContent = `Equipe → Liderança (${alvo.cargo})`;
+      } else {
+        selRel.value = 'PAR';
+        badge.textContent = 'Mesmo nível (Par)';
+      }
+    }
+
     async function carregarDadosFormularios() {
       const [colabs, crits, ciclos] = await Promise.all([
         fetch('/api/colaboradores').then(r => r.json()),
@@ -179,29 +225,44 @@
         fetch('/api/ciclos').then(r => r.json())
       ]);
 
-      const optColabs = colabs.map(c => `<option value="${c.id_colaborador}">${c.nome} (${c.cargo})</option>`).join('');
-      document.getElementById('selAvaliador').innerHTML = optColabs;
-      document.getElementById('selDesAvaliador').innerHTML = optColabs;
-      document.getElementById('selDesAvaliado').innerHTML = optColabs;
+      if (Array.isArray(colabs)) {
+        listaColaboradores = colabs;
+        const optColabs = colabs.map(c => `<option value="${c.id_colaborador}">${c.nome} (${c.cargo})</option>`).join('');
+        document.getElementById('selAvaliador').innerHTML = optColabs;
+        document.getElementById('selDesAvaliador').innerHTML = optColabs;
+        document.getElementById('selDesAvaliado').innerHTML = optColabs;
+        atualizarRelacaoAutomatica();
+      }
 
-      document.getElementById('selCriterio').innerHTML =
-        crits.map(c => `<option value="${c.id_criterio}">${c.nome}</option>`).join('');
+      if (Array.isArray(crits)) {
+        document.getElementById('selCriterio').innerHTML =
+          crits.map(c => `<option value="${c.id_criterio}">${c.nome}</option>`).join('');
+      }
 
-      const optCiclos = ciclos.map(c => {
-        const nomeCiclo = c.titulo || c.nome || c.descricao || `Ciclo #${c.id_ciclo}`;
-        const estado = c.status || c.situacao || (c.ativo !== undefined ? (c.ativo ? 'Ativo' : 'Encerrado') : '');
-        return `<option value="${c.id_ciclo}">${nomeCiclo}${estado ? ' (' + estado + ')' : ''}</option>`;
-      }).join('');
-      
+      if (Array.isArray(ciclos) && ciclos.length > 0) {
+        const optCiclos = ciclos.map(c => {
+          const nomeCiclo = c.titulo || c.nome || c.descricao || `Ciclo #${c.id_ciclo}`;
+          const estado = c.status || c.situacao || (c.ativo !== undefined ? (c.ativo ? 'Ativo' : 'Encerrado') : '');
+          return `<option value="${c.id_ciclo}">${nomeCiclo}${estado ? ' (' + estado + ')' : ''}</option>`;
+        }).join('');
+        document.getElementById('selCicloQuestao').innerHTML = optCiclos;
+        document.getElementById('selCicloDes').innerHTML = optCiclos;
+      } else {
+        const vazio = '<option value="">Nenhum ciclo cadastrado no banco</option>';
+        document.getElementById('selCicloQuestao').innerHTML = vazio;
+        document.getElementById('selCicloDes').innerHTML = vazio;
+      }
+
       carregarPendencias();
     }
 
     async function carregarPendencias() {
       const idAv = document.getElementById('selAvaliador').value;
+      if (!idAv) return;
       const pendencias = await fetch(`/api/pendencias?id_avaliador=${idAv}`).then(r => r.json());
       const sel = document.getElementById('selPendencia');
 
-      if (!pendencias.length) {
+      if (!Array.isArray(pendencias) || !pendencias.length) {
         sel.innerHTML = '<option value="">Nenhuma avaliação pendente para este usuário</option>';
         document.getElementById('containerQuestoes').innerHTML = '';
         document.getElementById('btnEnviarResp').style.display = 'none';
@@ -221,23 +282,35 @@
       const questoes = await fetch(`/api/questoes-ciclo?id_ciclo=${idCiclo}`).then(r => r.json());
       const div = document.getElementById('containerQuestoes');
 
-      div.innerHTML = questoes.map(q => `
-        <div class="questao-box">
-          <span class="badge">${q.criterio} • Peso ${q.peso}</span>
-          <p style="margin: 8px 0; font-weight: 600;">${q.enunciado}</p>
-          ${q.tipo_resposta === 'ESCALA_1_5'
-            ? `<select name="nota_${q.id_questao}" required>
-                 <option value="5">5 - Excelente</option>
-                 <option value="4" selected>4 - Muito Bom</option>
-                 <option value="3">3 - Satisfatório</option>
-                 <option value="2">2 - Abaixo do Esperado</option>
-                 <option value="1">1 - Insatisfatório</option>
-               </select>`
-            : `<textarea name="texto_${q.id_questao}" rows="2" required placeholder="Escreva seu feedback construtivo anônimo..."></textarea>`
-          }
-        </div>
-      `).join('');
-      document.getElementById('btnEnviarResp').style.display = questoes.length ? 'block' : 'none';
+      if (!Array.isArray(questoes) || !questoes.length) {
+        div.innerHTML = '<p style="color:#64748b; font-size:13px; margin-top:10px;">Nenhuma questão vinculada a este ciclo ainda.</p>';
+        document.getElementById('btnEnviarResp').style.display = 'none';
+        return;
+      }
+
+      div.innerHTML = questoes.map(q => {
+        const tipo = (q.tipo_resposta || q.tipo || q.tipo_questao || 'ESCALA_1_5').toUpperCase();
+        const textoPergunta = q.enunciado || q.texto || q.descricao || `Questão #${q.id_questao}`;
+        const isEscala = tipo.includes('ESCALA') || tipo.includes('NOTA') || tipo.includes('NUM');
+
+        return `
+          <div class="questao-box">
+            <span class="badge">${q.criterio} • Peso ${q.peso}</span>
+            <p style="margin: 8px 0; font-weight: 600;">${textoPergunta}</p>
+            ${isEscala
+              ? `<select name="nota_${q.id_questao}" required>
+                   <option value="5">5 - Excelente</option>
+                   <option value="4" selected>4 - Muito Bom</option>
+                   <option value="3">3 - Satisfatório</option>
+                   <option value="2">2 - Abaixo do Esperado</option>
+                   <option value="1">1 - Insatisfatório</option>
+                 </select>`
+              : `<textarea name="texto_${q.id_questao}" rows="2" required placeholder="Escreva seu feedback construtivo anônimo..."></textarea>`
+            }
+          </div>
+        `;
+      }).join('');
+      document.getElementById('btnEnviarResp').style.display = 'block';
     }
 
     async function postForm(url, params, msgId, onSuccess) {
@@ -260,7 +333,9 @@
 
     function enviarRespostas(e) {
       e.preventDefault();
-      const [idCiclo, idAvaliado] = document.getElementById('selPendencia').value.split('|');
+      const val = document.getElementById('selPendencia').value;
+      if (!val) return;
+      const [idCiclo, idAvaliado] = val.split('|');
       const data = new FormData(e.target);
       data.append('id_ciclo', idCiclo);
       data.append('id_avaliador', document.getElementById('selAvaliador').value);
@@ -278,12 +353,20 @@
 
     function cadastrarQuestao(e) {
       e.preventDefault();
-      postForm('/api/nova-questao', new FormData(e.target), 'msgQuestao', () => e.target.reset());
+      const cicloSelecionado = document.getElementById('selCicloQuestao').value;
+      postForm('/api/nova-questao', new FormData(e.target), 'msgQuestao', () => {
+        e.target.reset();
+        document.getElementById('selCicloQuestao').value = cicloSelecionado;
+        carregarQuestoesDoCiclo();
+      });
     }
 
     function cadastrarDesignacao(e) {
       e.preventDefault();
-      postForm('/api/nova-designacao', new FormData(e.target), 'msgDes', () => carregarPendencias());
+      postForm('/api/nova-designacao', new FormData(e.target), 'msgDes', () => {
+        document.getElementById('selAvaliador').value = document.getElementById('selDesAvaliador').value;
+        carregarPendencias();
+      });
     }
 
     async function carregarRelatorios() {
@@ -295,37 +378,58 @@
 
       Object.values(charts).forEach(c => c.destroy());
 
-      charts.ranking = new Chart(document.getElementById('chartRanking'), {
-        type: 'bar',
-        data: {
-          labels: ranking.map(r => `${r.avaliado} (${r.ciclo})`),
-          datasets: [{ label: 'Média Ponderada Final', data: ranking.map(r => r.media_ponderada_final), backgroundColor: '#1d4ed8', borderRadius: 6 }]
-        },
-        options: { indexAxis: 'y', scales: { x: { min: 0, max: 5 } } }
-      });
+      if (Array.isArray(ranking)) {
+        charts.ranking = new Chart(document.getElementById('chartRanking'), {
+          type: 'bar',
+          data: {
+            labels: ranking.map(r => `${r.avaliado} (${r.ciclo})`),
+            datasets: [{ label: 'Média Ponderada Final', data: ranking.map(r => r.media_ponderada_final), backgroundColor: '#1d4ed8', borderRadius: 6 }]
+          },
+          options: { indexAxis: 'y', scales: { x: { min: 0, max: 5 } } }
+        });
+        document.getElementById('tabelaRanking').innerHTML = `
+          <table>
+            <thead><tr><th>Pos.</th><th>Ciclo</th><th>Avaliado</th><th>Cargo</th><th>Média</th></tr></thead>
+            <tbody>${ranking.map(r => `<tr><td>${r.posicao_ranking}º</td><td>${r.ciclo}</td><td>${r.avaliado}</td><td>${r.cargo}</td><td><strong>${r.media_ponderada_final}</strong></td></tr>`).join('')}</tbody>
+          </table>`;
+      }
 
-      charts.criterios = new Chart(document.getElementById('chartCriterios'), {
-        type: 'radar',
-        data: {
-          labels: criterios.map(c => c.criterio),
-          datasets: [
-            { label: 'Média Simples', data: criterios.map(c => c.media_simples), borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.2)' },
-            { label: 'Média Ponderada', data: criterios.map(c => c.media_ponderada), borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.25)' }
-          ]
-        },
-        options: { scales: { r: { min: 0, max: 5 } } }
-      });
+      if (Array.isArray(criterios)) {
+        charts.criterios = new Chart(document.getElementById('chartCriterios'), {
+          type: 'radar',
+          data: {
+            labels: criterios.map(c => c.criterio),
+            datasets: [
+              { label: 'Média Simples', data: criterios.map(c => c.media_simples), borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.2)' },
+              { label: 'Média Ponderada', data: criterios.map(c => c.media_ponderada), borderColor: '#1e3a8a', backgroundColor: 'rgba(30,58,138,0.25)' }
+            ]
+          },
+          options: { scales: { r: { min: 0, max: 5 } } }
+        });
+        document.getElementById('tabelaCriterios').innerHTML = `
+          <table>
+            <thead><tr><th>Critério</th><th>Média Simples</th><th>Média Ponderada</th></tr></thead>
+            <tbody>${criterios.map(c => `<tr><td>${c.criterio}</td><td>${c.media_simples}</td><td><strong>${c.media_ponderada}</strong></td></tr>`).join('')}</tbody>
+          </table>`;
+      }
 
-      charts.adesao = new Chart(document.getElementById('chartAdesao'), {
-        type: 'bar',
-        data: {
-          labels: adesao.map(a => a.colaborador),
-          datasets: [
-            { label: 'Concluídas', data: adesao.map(a => a.concluidas), backgroundColor: '#16a34a' },
-            { label: 'Pendentes', data: adesao.map(a => a.pendentes), backgroundColor: '#ea580c' }
-          ]
-        }
-      });
+      if (Array.isArray(adesao)) {
+        charts.adesao = new Chart(document.getElementById('chartAdesao'), {
+          type: 'bar',
+          data: {
+            labels: adesao.map(a => a.colaborador),
+            datasets: [
+              { label: 'Concluídas', data: adesao.map(a => a.concluidas), backgroundColor: '#16a34a' },
+              { label: 'Pendentes', data: adesao.map(a => a.pendentes), backgroundColor: '#ea580c' }
+            ]
+          }
+        });
+        document.getElementById('tabelaAdesao').innerHTML = `
+          <table>
+            <thead><tr><th>Colaborador</th><th>Departamento</th><th>Total</th><th>Concluídas</th><th>Pendentes</th></tr></thead>
+            <tbody>${adesao.map(a => `<tr><td>${a.colaborador}</td><td>${a.departamento}</td><td>${a.total_designadas}</td><td>${a.concluidas}</td><td>${a.pendentes}</td></tr>`).join('')}</tbody>
+          </table>`;
+      }
     }
 
     carregarRelatorios();
