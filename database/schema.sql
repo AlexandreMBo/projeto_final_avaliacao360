@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS Colaborador CASCADE;
 -- COLABORADOR
 -- Tabela independente
 -- armazena os dados de cada funcionário o id será utilizado como chave primária, cpf e email serão unique, já que não pode haver funcionários com mesmo email e cpf.
+-- restrição de cargo para os cargos pré-definidos no sistema na constraint para garantir que não haja erro de preenchimento ou cargo inválido.
 CREATE TABLE Colaborador (
     id_colaborador SERIAL PRIMARY KEY,
     cpf CHAR(11) UNIQUE NOT NULL,
@@ -21,6 +22,15 @@ CREATE TABLE Colaborador (
     senha VARCHAR(50) NOT NULL,
     cargo VARCHAR(60) NOT NULL,
     departamento VARCHAR(60) NOT NULL
+    CONSTRAINT chk_cargo CHECK (cargo IN (
+        'Diretor de Unidade',
+        'Coordenador de Curso',
+        'Professor',
+        'Supervisor',
+        'Tutor',
+        'Supervisor de TI',
+        'Técnico de TI'
+    ))
 );
 
 -- CRITERIO

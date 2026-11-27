@@ -20,7 +20,7 @@ CICLO_QUESTAO (id_ciclo, id_questao, peso, ordem)
 Restrições: A chave primária (PK) é composta por id_ciclo e id_questao. São chaves estrangeiras (FK) que referenciam CICLO_AVALIACAO e QUESTAO. O peso deve ser maior que zero.
 
 DESIGNACAO_360 (id_ciclo, id_avaliador, id_avaliado, relacao, status)
-Restrições: A chave primária (PK) é composta por id_ciclo, id_avaliador e id_avaliado (garante que cada avaliador avalie cada avaliado apenas uma vez por ciclo). O id_ciclo referencia CICLO_AVALIACAO, e tanto id_avaliador quanto id_avaliado são chaves estrangeiras (FK) que referenciam COLABORADOR(id_colaborador). A relacao aceita AUTOAVALIACAO, PAR, GESTOR ou LIDERADO, e o status aceita PENDENTE ou CONCLUIDA.
+Restrições: A chave primária (PK) é composta por id_ciclo, id_avaliador e id_avaliado (garante que cada avaliador avalie cada avaliado apenas uma vez por ciclo). O id_ciclo referencia CICLO_AVALIACAO, e tanto id_avaliador quanto id_avaliado são chaves estrangeiras (FK) que referenciam COLABORADOR(id_colaborador). A relacao aceita AUTOAVALIACAO (peso 1,0), PAR (peso 1,5), GESTOR (peso 2,0) ou LIDERADO (peso 1,5), e o status aceita PENDENTE ou CONCLUIDA.
 
 RESPOSTA (id_ciclo, id_avaliador, id_avaliado, id_questao, nota_escala, texto_resposta)
 Restrições: A chave primária (PK) é composta por id_ciclo, id_avaliador, id_avaliado e id_questao. Possui duas chaves estrangeiras (FK) compostas: (id_ciclo, id_avaliador, id_avaliado) referencia DESIGNACAO_360 e (id_ciclo, id_questao) referencia CICLO_QUESTAO. A nota_escala aceita apenas valores de 1 a 5.
