@@ -65,22 +65,61 @@ INSERT INTO Questao (enunciado, tipo, id_criterio) VALUES
     ('Como a nossa universidade poderia contribuir para o seu desenvolvimento pessoal e profissional?',            'TEXTO_LIVRE', 6),
     ('Apresente ideias que promovam um ambiente de trabalho mais acolhedor e confortável:',                       'TEXTO_LIVRE', 5);
 
--- 4. CICLO DE AVALIAÇÃO (ID: 1)
+-- 4. CICLOS DE AVALIAÇÃO (IDs: 1 a 5 — atende ao mínimo de 5 avaliações do edital)
 INSERT INTO Ciclo_Avaliacao (titulo, data_inicio, data_fim) VALUES
-    ('Avaliação Institucional 360° - 2026/2', DATE '2026-11-01', DATE '2026-11-30'),
-    ('Avaliação Docente e Tutoria - 2026/2',  DATE '2026-11-01', DATE '2026-11-30');
+    ('Avaliação Institucional 360° - 2026/2',       DATE '2026-11-01', DATE '2026-11-30'),
+    ('Avaliação Docente e Tutoria - 2026/2',        DATE '2026-11-01', DATE '2026-11-30'),
+    ('Pesquisa de Clima e Bem-estar - 2026/2',      DATE '2026-10-01', DATE '2026-10-31'),
+    ('Avaliação de Desenvolvimento e Carreira',     DATE '2026-09-01', DATE '2026-09-30'),
+    ('Avaliação de Cooperação Intersetorial',       DATE '2026-08-01', DATE '2026-08-31');
 
--- 5. QUESTÕES DO CICLO 1 COM PESOS
--- A questão 2 (Comprometimento e Prazos) tem peso 2.0; as demais têm peso 1.0
--- o ciclo 2 é destinado apenas a docentes e tutores - relacionamento com a didática (questão 5)
+-- 5. QUESTÕES POR CICLO COM PESOS DIFERENCIADOS (Ciclo_Questao)
+-- Pesos: 2.0 (critério central do ciclo), 1.5 (critério secundário), 1.0 (padrão e questões abertas)
 INSERT INTO Ciclo_Questao (id_ciclo, id_questao, peso, ordem) VALUES
-    (1, 1, 1.0, 1),
-    (1, 2, 2.0, 2),
-    (1, 3, 1.0, 3),
-    (1, 5, 1.0, 4),
-    (2, 4, 2.0, 1),
-    (2, 1, 1.0, 2),
-    (2, 5, 1.0, 3);
+    -- CICLO 1: Avaliação Institucional 360° (foco em entregas e comunicação)
+    (1, 1,  1.5, 1),  -- Comunicação clara
+    (1, 2,  2.0, 2),  -- Prazos e qualidade (peso máximo)
+    (1, 3,  1.5, 3),  -- Cooperação
+    (1, 6,  1.0, 4),  -- Escuta ativa
+    (1, 7,  1.0, 5),  -- Transparência em mudanças
+    (1, 9,  1.5, 6),  -- Organização diária
+    (1, 10, 2.0, 7),  -- Responsabilidade pelos resultados (peso máximo)
+    (1, 11, 1.0, 8),  -- Uso eficiente de recursos
+    (1, 5,  1.0, 9),  -- Aberta: ponto forte / melhoria
+
+    -- CICLO 2: Avaliação Docente e Tutoria (exclusivo para Docentes/Tutores — trigger Didática)
+    (2, 1,  1.0, 1),  -- Comunicação
+    (2, 4,  2.0, 2),  -- Clareza didática (peso máximo)
+    (2, 16, 2.0, 3),  -- Atualização de metodologias didáticas (peso máximo)
+    (2, 17, 1.5, 4),  -- Estímulo ao pensamento crítico
+    (2, 2,  1.0, 5),  -- Prazos acadêmicos
+    (2, 5,  1.0, 6),  -- Aberta: ponto forte / melhoria
+
+    -- CICLO 3: Pesquisa de Clima e Bem-estar (contentamento, estresse e ambiente)
+    (3, 18, 2.0, 1),  -- Contentamento e satisfação geral (peso máximo)
+    (3, 19, 2.0, 2),  -- Equilíbrio emocional e controle do estresse (peso máximo)
+    (3, 20, 1.5, 3),  -- Carga de trabalho saudável
+    (3, 21, 1.5, 4),  -- Conforto e acolhimento do ambiente
+    (3, 22, 1.5, 5),  -- Respeito e valorização
+    (3, 23, 1.5, 6),  -- Conciliação vida pessoal e profissional
+    (3, 30, 1.0, 7),  -- Aberta: ideias para ambiente acolhedor
+
+    -- CICLO 4: Avaliação de Desenvolvimento e Carreira (realização e cursos)
+    (4, 24, 2.0, 1),  -- Realização profissional (peso máximo)
+    (4, 25, 1.5, 2),  -- Oportunidades de crescimento
+    (4, 26, 1.5, 3),  -- Frequência de cursos de aprimoramento
+    (4, 27, 2.0, 4),  -- Profundidade e aplicabilidade dos cursos (peso máximo)
+    (4, 28, 1.5, 5),  -- Incentivo institucional para capacitações
+    (4, 29, 1.0, 6),  -- Aberta: como a universidade pode contribuir
+
+    -- CICLO 5: Avaliação de Cooperação Intersetorial (trabalho em equipe e integração)
+    (5, 3,  2.0, 1),  -- Colaboração na resolução de problemas (peso máximo)
+    (5, 8,  1.5, 2),  -- Transparência ao tratar divergências
+    (5, 12, 1.5, 3),  -- Compartilhamento de conhecimentos
+    (5, 13, 2.0, 4),  -- Disponibilidade em alta demanda (peso máximo)
+    (5, 14, 1.5, 5),  -- Clima de confiança entre setores
+    (5, 15, 1.5, 6),  -- Acolhimento de novos membros
+    (5, 30, 1.0, 7);  -- Aberta: ideias para ambiente acolhedor
 
 -- 6. DESIGNAÇÕES 360° (Quem avalia quem — núcleos separados!)
 -- Exemplo 1: Avaliação completa 360° do Professor Carlos (id = 3)
